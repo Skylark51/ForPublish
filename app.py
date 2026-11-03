@@ -15,6 +15,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import webbrowser
+from contextlib import closing
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -37,7 +38,7 @@ def data_dir() -> Path:
 
 def initialize_database(path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    with sqlite3.connect(path) as conn:
+    with closing(sqlite3.connect(path)) as conn, conn:
         conn.execute("""CREATE TABLE IF NOT EXISTS runs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             created_at TEXT NOT NULL, query TEXT NOT NULL,
@@ -46,7 +47,7 @@ def initialize_database(path: Path) -> None:
 
 
 def store_run(path: Path, result: dict) -> int:
-    with sqlite3.connect(path) as conn:
+    with closing(sqlite3.connect(path)) as conn, conn:
         cursor = conn.execute(
             "INSERT INTO runs(created_at, query, data) VALUES (?, ?, ?)",
             (result["created_at"], result["query"], json.dumps(result, ensure_ascii=False)),
@@ -55,7 +56,7 @@ def store_run(path: Path, result: dict) -> int:
 
 
 def list_runs(path: Path) -> list[dict]:
-    with sqlite3.connect(path) as conn:
+    with closing(sqlite3.connect(path)) as conn, conn:
         rows = conn.execute(
             "SELECT id, created_at, query, data FROM runs ORDER BY id DESC LIMIT 100"
         ).fetchall()
@@ -68,7 +69,7 @@ def list_runs(path: Path) -> list[dict]:
 
 
 def read_run(path: Path, run_id: int) -> dict | None:
-    with sqlite3.connect(path) as conn:
+    with closing(sqlite3.connect(path)) as conn, conn:
         row = conn.execute("SELECT data FROM runs WHERE id = ?", (run_id,)).fetchone()
     if not row:
         return None
