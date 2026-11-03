@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+build/
+dist/
+*.spec
+.env
+*.sqlite3
+*.db
+backups/
+ForPublish.exe
